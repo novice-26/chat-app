@@ -46,10 +46,11 @@ module.exports={
         return user;
 
       }catch(err){
-        console.log("err in register",err);
         if(err.name === 'SequelizeUniqueConstraintError'){
-          console.log("==============>this is good")
           err.errors.forEach(e=>(errors[e.path]= `${e.path} is already taken`))
+        }
+        else if(err.name === 'SequelizeValidationError'){
+          err.errors.forEach(e=>(errors[e.path]=e.message))
         }
         throw new UserInputError('Bad Input',{errors:err});
       }
