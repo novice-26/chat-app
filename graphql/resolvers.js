@@ -15,13 +15,11 @@ module.exports={
 
           if(context.req && context.req.headers.authorization){
             const token = context.req.headers.authorization.split("Bearer ")[1];
-            console.log("token",token);
             jwt.verify(token,JWT_SECRET,(err,decodedToken)=>{
               if(err){
                 throw new AuthenticationError('Unauthenticated ')
               }
-              user=decodedToken;
-              
+              user=decodedToken;             
             })
           }
           const users=await User.findAll({where:{

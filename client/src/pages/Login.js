@@ -1,30 +1,27 @@
 import React from "react";
 import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
 import { useState } from "react";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useLazyQuery } from "@apollo/client";
 import { Link } from "react-router-dom";
 
-const REGISTER_USER = gql`
-  mutation register(
+const LOGIN_USER = gql`
+  query login(
     $username: String!
-    $email: String!
     $password: String!
-    $confirmPassword: String!
   ) {
-    register(
+    login(
       username: $username
-      email: $email
       password: $password
-      confirmPassword: $confirmPassword
     ) {
       username
       email
       createdAt
+      token
     }
   }
 `;
 
-export default function Register(props) {
+export default function Login(props) {
   const [formData, setFormData] = useState({
     email: "",
     username: "",
@@ -34,46 +31,31 @@ export default function Register(props) {
 
   const [errors, setErrors] = useState({});
 
-  const [registerUser, { loading }] = useMutation(REGISTER_USER, {
-    update:(_, res) => props.history.push("/login"),
-    onError(err){
-      console.log("err", err);
-      setErrors(err.graphQLErrors[0].extensions.errors);
-    },
+  const [loginUser, { loading }] = useLazyQuery(LOGIN_USER, {
+    onError:(err)=>setErrors(err.graphQLErrors[0].extensions.errors),
+    onCompleted:(data)=>{
+        localStorage.setItem('token',data.login.token);
+        props.history.push("/")
+    }
   });
 
-  const submitRegisterForm = (e) => {
+  const submitLoginForm = (e) => {
     e.preventDefault();
-    registerUser({
+    loginUser({
       variables: {
-        email: formData.email,
         username: formData.username,
         password: formData.password,
-        confirmPassword: formData.confirmPassword,
       },
     });
   };
+
   return (
 
     <>
       <Row className="bg-white py-5 justify-content-center">
         <Col sm={8} md={6} lg={4}>
-          <h1 className="text-center">Register</h1>
-          <Form onSubmit={submitRegisterForm}>
-            <Form.Group className="mb-3">
-              <Form.Label className={errors.email && "text-danger"}>
-                {errors.email ?? "Email Address"}
-              </Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter email"
-                className={errors.email && 'is-invalid'}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                value={formData.email}
-              />
-            </Form.Group>
+          <h1 className="text-center">Login</h1>
+          <Form onSubmit={submitLoginForm}>
             <Form.Group className="mb-3">
               <Form.Label className={errors.username && "text-danger"}>
                 {errors.username ?? "Username"}
@@ -100,25 +82,12 @@ export default function Register(props) {
                 value={formData.password}
               />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label className={errors.confirmPassword && "text-danger"}>
-                {errors.confirmPassword ?? "Confirm Password"}
-              </Form.Label>
-              <Form.Control
-                type="password"
-                className={errors.confirmPassword && 'is-invalid'}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                value={formData.confirmPassword}
-              />
-            </Form.Group>
             <div className="text-center">
               <Button variant="primary" type="submit" disabled={loading}>
-                {loading ? "Loading... " : "Register"}
+                {loading ? "Loading... " : "Login"}
               </Button>
               <br/>
-              <small>Already have an account? <Link to="/login">Login</Link></small>
+              <small>Don't have an account? <Link to="/register">Register</Link></small>
             </div>
           </Form>
         </Col>
@@ -126,3 +95,4 @@ export default function Register(props) {
     </>
   );
 }
+
