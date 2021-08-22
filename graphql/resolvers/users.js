@@ -1,7 +1,7 @@
-const {User}=require('../models')
+const {User,Message}=require('../../models')
 const bcrypt=require('bcryptjs')
 const {UserInputError,AuthenticationError}=require('apollo-server')
-const {JWT_SECRET}=require('../config/env.json')
+const {JWT_SECRET}=require('../../config/env.json')
 const jwt=require('jsonwebtoken')
 const {Op}=require('sequelize')
 
@@ -9,19 +9,12 @@ const {Op}=require('sequelize')
 
 module.exports={
     Query: {
-      getUsers: async (parent,args,context,info) => {    
+      getUsers: async (parent,args,{user},info) => {    
          try{
-          let user=null;
-
-          if(context.req && context.req.headers.authorization){
-            const token = context.req.headers.authorization.split("Bearer ")[1];
-            jwt.verify(token,JWT_SECRET,(err,decodedToken)=>{
-              if(err){
-                throw new AuthenticationError('Unauthenticated ')
-              }
-              user=decodedToken;             
-            })
+          if(!user){
+            throw new AuthenticationError('Unauthenticated');
           }
+
           const users=await User.findAll({where:{
             username:{[Op.ne]:user.username}
           }})
@@ -60,7 +53,6 @@ module.exports={
           return {...user.toJSON(),
            createdAt:user.createdAt.toISOString(),
            token
-          
           };
         }catch(err){
           console.log(err)
@@ -110,6 +102,6 @@ module.exports={
         }
         throw new UserInputError('Bad Input',{errors:err});
       }
-      }
+      }, 
     }
   };
