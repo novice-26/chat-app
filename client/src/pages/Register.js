@@ -3,6 +3,7 @@ import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
 import { useState } from "react";
 import { gql, useMutation } from "@apollo/client";
 import { Link } from "react-router-dom";
+import { useAuthDispatch } from "../context/auth";
 
 const REGISTER_USER = gql`
   mutation register(
